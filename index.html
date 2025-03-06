@@ -34,6 +34,7 @@
             border: 1px solid #ccc;
             border-radius: 6px;
             outline: none;
+            width: 100%;
         }
         button {
             width: 100%;
@@ -55,26 +56,50 @@
             font-size: 14px;
             margin-top: 10px;
         }
+        .loading {
+            color: gray;
+            font-size: 14px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h2>パスワードを入力してください</h2>
         <input type="password" id="password" placeholder="パスワード">
-        <button onclick="checkPassword()">送信</button>
+        <button id="submitButton" onclick="checkPassword()">送信</button>
         <p id="message"></p>
     </div>
 
     <script>
-        function checkPassword() {
-            const correctPassword = "1234";  // 設定するパスワード
+        async function checkPassword() {
             const inputPassword = document.getElementById("password").value;
+            const messageElement = document.getElementById("message");
+            const submitButton = document.getElementById("submitButton");
 
-            if (inputPassword === correctPassword) {
-                window.location.href = "https://www.notion.so/1aa08b89804880f9888adea26fa7b3df?pvs=4";  // Notionの公開リンク
-            } else {
-                document.getElementById("message").innerText = "パスワードが間違っています";
+            // ボタンを無効化し、ローディング状態を表示
+            submitButton.disabled = true;
+            messageElement.innerHTML = '<span class="loading">確認中...</span>';
+
+            try {
+                const response = await fetch("https://imaginative-griffin-b36942.netlify.app/.netlify/functions/checkPassword", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ password: inputPassword })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    window.location.href = data.redirectURL;
+                } else {
+                    messageElement.innerText = "パスワードが間違っています";
+                }
+            } catch (error) {
+                messageElement.innerText = "エラーが発生しました。もう一度試してください。";
             }
+
+            // ボタンを再度有効化
+            submitButton.disabled = false;
         }
     </script>
 </body>
