@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>パスワード認証</title>
+</head>
+<body>
+    <h2>パスワードを入力してください</h2>
+    <input type="password" id="password">
+    <button onclick="checkPassword()">送信</button>
+    <p id="message" style="color:red;"></p>
+
+    <script>
+        function checkPassword() {
+            const correctPassword = "1234";  // 設定するパスワード
+            const inputPassword = document.getElementById("password").value;
+
+            if (inputPassword === correctPassword) {
+                window.location.href = "https://www.notion.so/your-page-url";  // Notionの公開リンク
+            } else {
+                document.getElementById("message").innerText = "パスワードが間違っています";
+            }
+        }
+    </script>
+</body>
+</html>
