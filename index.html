@@ -141,17 +141,20 @@
 
             if (permissionStatus.state === "granted") {
               console.log("初回から位置情報：許可済み");
+              // ✅ すぐパスワード画面に切り替える
+              getLocationAndProceed();
+
+              // ✅ その裏で非同期で位置情報を取得
               navigator.geolocation.getCurrentPosition(
                 (position) => {
                   currentLocation = {
                     lat: position.coords.latitude,
                     lon: position.coords.longitude,
                   };
-                  getLocationAndProceed();
+                  console.log("位置情報取得成功:", currentLocation);
                 },
                 (error) => {
                   console.error("位置情報取得失敗:", error);
-                  locationMessage.innerText = "位置情報の取得に失敗しました。";
                 }
               );
             } else if (permissionStatus.state === "prompt") {
