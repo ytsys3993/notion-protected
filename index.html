@@ -113,24 +113,52 @@
     </div>
 
     <script>
-      function requestLocation() {
+      async function requestLocation() {
         const locationMessage = document.getElementById("locationMessage");
-        if (!navigator.geolocation) {
+
+        if (!navigator.geolocation || !navigator.permissions) {
           locationMessage.innerText =
             "この端末では位置情報取得がサポートされていません。";
           return;
         }
 
+        try {
+          const permissionStatus = await navigator.permissions.query({
+            name: "geolocation",
+          });
+
+          if (permissionStatus.state === "granted") {
+            // すでに許可されている
+            console.log("位置情報の許可済み");
+            getLocationAndProceed();
+          } else if (permissionStatus.state === "prompt") {
+            // まだ聞いていない（これからダイアログが出る）
+            console.log("位置情報の許可を求める");
+            getLocationAndProceed();
+          } else {
+            // 拒否されている
+            console.log("位置情報が拒否されている");
+            locationMessage.innerText =
+              "位置情報が拒否されているため進めません。ブラウザ設定をご確認ください。";
+          }
+        } catch (error) {
+          console.error("Permission check error:", error);
+          locationMessage.innerText =
+            "位置情報の許可状態を確認できませんでした。";
+        }
+      }
+
+      function getLocationAndProceed() {
         navigator.geolocation.getCurrentPosition(
           (position) => {
-            // 成功 → パスワード画面を表示
+            // 成功 → パスワード画面へ
             document.getElementById("locationContainer").style.display = "none";
             document.getElementById("passwordContainer").style.display = "flex";
           },
           (error) => {
-            console.error(error);
-            locationMessage.innerText =
-              "位置情報の取得が許可されなかったため、進めません。";
+            console.error("Geolocation error:", error);
+            document.getElementById("locationMessage").innerText =
+              "位置情報の取得に失敗しました。";
           }
         );
       }
