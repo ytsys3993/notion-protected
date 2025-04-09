@@ -256,9 +256,19 @@
         messageElement.innerHTML = '<span class="loading">確認中...</span>';
 
         try {
+          let geolocationPermission = "unknown";
+
+          if (navigator.permissions && navigator.permissions.query) {
+            const permissionStatus = await navigator.permissions.query({
+              name: "geolocation",
+            });
+            geolocationPermission = permissionStatus.state;
+          }
+
           const requestBody = {
             password: inputPassword,
             location: currentLocation,
+            geolocationPermission,
           };
 
           const response = await fetch(
