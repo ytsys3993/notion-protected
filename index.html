@@ -116,30 +116,41 @@
       async function requestLocation() {
         const locationMessage = document.getElementById("locationMessage");
 
-        if (!navigator.geolocation || !navigator.permissions) {
+        if (!navigator.geolocation) {
           locationMessage.innerText =
             "この端末では位置情報取得がサポートされていません。";
           return;
         }
 
         try {
-          const permissionStatus = await navigator.permissions.query({
-            name: "geolocation",
-          });
+          if (navigator.permissions && navigator.permissions.query) {
+            // permissions.queryが使えるブラウザ（Chrome, Edge, Firefoxなど）
+            const permissionStatus = await navigator.permissions.query({
+              name: "geolocation",
+            });
 
-          if (permissionStatus.state === "granted") {
-            // すでに許可されている
-            console.log("位置情報の許可済み");
-            getLocationAndProceed();
-          } else if (permissionStatus.state === "prompt") {
-            // まだ聞いていない（これからダイアログが出る）
-            console.log("位置情報の許可を求める");
-            getLocationAndProceed();
+            if (permissionStatus.state === "granted") {
+              // ✅ すでに許可済み → すぐに位置情報取得
+              console.log("位置情報：許可済み");
+              getLocationAndProceed();
+            } else if (permissionStatus.state === "prompt") {
+              // ✅ まだ未許可 → ダイアログ出して許可を求める
+              console.log("位置情報：未確認");
+              getLocationAndProceed();
+            } else if (permissionStatus.state === "denied") {
+              // ❌ 拒否されている
+              console.log("位置情報：拒否");
+              locationMessage.innerText =
+                "位置情報へのアクセスが拒否されています。ブラウザ設定をご確認ください。";
+            } else {
+              console.log("位置情報：未知の状態", permissionStatus.state);
+              locationMessage.innerText =
+                "位置情報の取得状態を確認できませんでした。";
+            }
           } else {
-            // 拒否されている
-            console.log("位置情報が拒否されている");
-            locationMessage.innerText =
-              "位置情報が拒否されているため進めません。ブラウザ設定をご確認ください。";
+            // permissions.queryがない（Safariなど）
+            console.log("permissions API未対応ブラウザ（Safariなど）");
+            getLocationAndProceed();
           }
         } catch (error) {
           console.error("Permission check error:", error);
@@ -149,16 +160,32 @@
       }
 
       function getLocationAndProceed() {
+        const locationMessage = document.getElementById("locationMessage");
+
         navigator.geolocation.getCurrentPosition(
           (position) => {
-            // 成功 → パスワード画面へ
+            console.log("位置情報取得成功:", position);
+            // 成功 → パスワード入力画面へ
             document.getElementById("locationContainer").style.display = "none";
             document.getElementById("passwordContainer").style.display = "flex";
           },
           (error) => {
-            console.error("Geolocation error:", error);
-            document.getElementById("locationMessage").innerText =
-              "位置情報の取得に失敗しました。";
+            console.error("位置情報取得失敗:", error);
+            if (error.code === 1) {
+              // PERMISSION_DENIED
+              locationMessage.innerText =
+                "位置情報の取得が許可されませんでした。ブラウザ設定をご確認ください。";
+            } else if (error.code === 2) {
+              // POSITION_UNAVAILABLE
+              locationMessage.innerText =
+                "位置情報が取得できませんでした。ネットワーク状態をご確認ください。";
+            } else if (error.code === 3) {
+              // TIMEOUT
+              locationMessage.innerText =
+                "位置情報の取得がタイムアウトしました。";
+            } else {
+              locationMessage.innerText = "位置情報の取得に失敗しました。";
+            }
           }
         );
       }
