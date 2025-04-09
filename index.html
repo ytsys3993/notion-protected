@@ -141,7 +141,19 @@
 
             if (permissionStatus.state === "granted") {
               console.log("初回から位置情報：許可済み");
-              getLocationAndProceed();
+              navigator.geolocation.getCurrentPosition(
+                (position) => {
+                  currentLocation = {
+                    lat: position.coords.latitude,
+                    lon: position.coords.longitude,
+                  };
+                  getLocationAndProceed();
+                },
+                (error) => {
+                  console.error("位置情報取得失敗:", error);
+                  locationMessage.innerText = "位置情報の取得に失敗しました。";
+                }
+              );
             } else if (permissionStatus.state === "prompt") {
               console.log("初回は位置情報：未確認");
               showRequestButton();
