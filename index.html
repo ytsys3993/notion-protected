@@ -74,8 +74,7 @@
         opacity: 0.5;
         cursor: not-allowed;
       }
-      #message,
-      #locationMessage {
+      #message {
         font-size: 14px;
         margin-top: 12px;
         color: #d93025;
@@ -90,162 +89,37 @@
     </style>
   </head>
   <body>
-    <!-- Twitter警告画面 -->
-    <div class="container" id="twitterWarningContainer" style="display: none">
+    <!-- パスワード入力画面のみ表示 -->
+    <div class="container" id="passwordContainer">
       <div class="logo">
         <img src="./Notion-logo.png" alt="notion-logo" />
       </div>
-      <h2>Safari/Chromeで開いてください</h2>
-      <p class="description">
-        現在、Xアプリ内ブラウザで開いています。<br />
-        通常のSafariまたはChromeでこのページを開いてください。
-      </p>
-      <ol
-        style="
-          font-size: 14px;
-          text-align: left;
-          margin-top: 8px;
-          margin-left: 20px;
-        "
-      >
-        <li>右下の共有ボタン（□から↑）をタップ</li>
-        <li>「Safariで開く」を選択</li>
-      </ol>
-    </div>
-
-    <!-- 通常フロー画面（位置情報許可→パスワード入力） -->
-    <div id="normalFlow" style="display: none">
-      <!-- 位置情報許可画面 -->
-      <div class="container" id="locationContainer">
-        <div class="logo">
-          <img src="./Notion-logo.png" alt="notion-logo" />
-        </div>
-        <h2>位置情報の取得にご協力ください</h2>
-        <p class="description">
-          安心・安全なご利用のため、位置情報へのアクセス許可をお願いいたします。<br />
-          取得した位置情報は、不正アクセス防止のためにのみ使用します。
-        </p>
-        <button
-          id="requestButton"
-          style="display: none"
-          onclick="onClickRequestButton()"
-        >
-          位置情報を許可する
-        </button>
-        <p id="locationMessage"></p>
-      </div>
-
-      <!-- パスワード入力画面 -->
-      <div class="container" id="passwordContainer" style="display: none">
-        <div class="logo">
-          <img src="./Notion-logo.png" alt="notion-logo" />
-        </div>
-        <h2>パスワードを入力してください</h2>
-        <input type="password" id="password" placeholder="パスワード" />
-        <button id="submitButton" onclick="checkPassword()">送信</button>
-        <p id="message"></p>
-      </div>
+      <h2>パスワードを入力してください</h2>
+      <input type="password" id="password" placeholder="パスワード" />
+      <button id="submitButton" onclick="checkPassword()">送信</button>
+      <p id="message"></p>
     </div>
 
     <script>
-      let currentLocation = null;
+      let currentLocation = null; // ← 位置情報は使わないが一応残しておく
 
       document.addEventListener("DOMContentLoaded", async () => {
+        // --- Twitterブラウザ検出機能も一旦コメントアウト ---
+        /*
         const ua = navigator.userAgent.toLowerCase();
         const isTwitterInAppBrowser = ua.includes("twitter");
 
         if (isTwitterInAppBrowser) {
-          // ✅ Twitter内ブラウザなら問答無用で警告画面
-          document.getElementById("twitterWarningContainer").style.display =
-            "flex";
-          document.getElementById("normalFlow").style.display = "none";
+          document.getElementById("twitterWarningContainer").style.display = "flex";
+          document.getElementById("passwordContainer").style.display = "none";
           return;
         }
+        */
+        // --- ここまで ---
 
-        // ✅ 通常ブラウザの場合のみここから先に進む
-        document.getElementById("twitterWarningContainer").style.display =
-          "none";
-        document.getElementById("normalFlow").style.display = "block";
-
-        const locationMessage = document.getElementById("locationMessage");
-
-        if (!navigator.geolocation) {
-          locationMessage.innerText =
-            "この端末では位置情報取得がサポートされていません。";
-          return;
-        }
-
-        try {
-          if (navigator.permissions && navigator.permissions.query) {
-            const permissionStatus = await navigator.permissions.query({
-              name: "geolocation",
-            });
-
-            if (permissionStatus.state === "granted") {
-              console.log("初回から位置情報：許可済み");
-              getLocationAndProceed();
-              navigator.geolocation.getCurrentPosition(
-                (position) => {
-                  currentLocation = {
-                    lat: position.coords.latitude,
-                    lon: position.coords.longitude,
-                  };
-                  console.log("位置情報取得成功");
-                },
-                (error) => {
-                  console.error("位置情報取得失敗:", error);
-                }
-              );
-            } else if (permissionStatus.state === "prompt") {
-              console.log("初回は位置情報：未確認");
-              showRequestButton();
-            } else if (permissionStatus.state === "denied") {
-              console.log("初回から位置情報：拒否");
-              locationMessage.innerText =
-                "位置情報へのアクセスが拒否されています。ブラウザ設定をご確認ください。";
-            }
-          } else {
-            console.log("permissions API未対応ブラウザ（Safariなど）");
-            showRequestButton();
-          }
-        } catch (error) {
-          console.error("Permission check error:", error);
-          locationMessage.innerText =
-            "位置情報の許可状態を確認できませんでした。";
-        }
+        // 通常はパスワード画面のみ表示
+        document.getElementById("passwordContainer").style.display = "flex";
       });
-
-      function showRequestButton() {
-        document.getElementById("requestButton").style.display = "block";
-      }
-
-      function onClickRequestButton() {
-        const locationMessage = document.getElementById("locationMessage");
-
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            currentLocation = {
-              lat: position.coords.latitude,
-              lon: position.coords.longitude,
-            };
-            getLocationAndProceed();
-          },
-          (error) => {
-            if (error.code === 1) {
-              locationMessage.innerText =
-                "位置情報の取得が許可されませんでした。ブラウザ設定をご確認ください。";
-            } else if (error.code === 2) {
-              locationMessage.innerText =
-                "位置情報が取得できませんでした。ネットワーク状態をご確認ください。";
-            } else if (error.code === 3) {
-              locationMessage.innerText =
-                "位置情報の取得がタイムアウトしました。";
-            } else {
-              locationMessage.innerText = "位置情報の取得に失敗しました。";
-            }
-          }
-        );
-      }
 
       async function checkPassword() {
         const inputPassword = document.getElementById("password").value;
@@ -256,19 +130,20 @@
         messageElement.innerHTML = '<span class="loading">確認中...</span>';
 
         try {
+          // --- geolocation許可確認もコメントアウト ---
+          /*
           let geolocationPermission = "unknown";
-
           if (navigator.permissions && navigator.permissions.query) {
-            const permissionStatus = await navigator.permissions.query({
-              name: "geolocation",
-            });
+            const permissionStatus = await navigator.permissions.query({ name: "geolocation" });
             geolocationPermission = permissionStatus.state;
           }
+          */
+          // --- ここまで ---
 
           const requestBody = {
             password: inputPassword,
-            location: currentLocation,
-            geolocationPermission,
+            // location: currentLocation, ← 送らない
+            // geolocationPermission, ← 送らない
           };
 
           const response = await fetch(
@@ -293,11 +168,6 @@
         }
 
         submitButton.disabled = false;
-      }
-
-      function getLocationAndProceed() {
-        document.getElementById("locationContainer").style.display = "none";
-        document.getElementById("passwordContainer").style.display = "flex";
       }
     </script>
   </body>
